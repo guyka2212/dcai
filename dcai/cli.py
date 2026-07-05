@@ -86,47 +86,52 @@ def interactive_menu():
 
 
 def run_command_from_menu(commands: dict):
-    inp = handle_slash(
-        questionary.text("Enter command (or /help for list)").ask()
-    )
-
-    parts = inp.strip().split(maxsplit=1)
-    cmd = parts[0].lower()
-    arg = parts[1] if len(parts) > 1 else None
-
-    if cmd in ("/help", "help"):
-        if arg:
-            show_help(arg)
-        else:
-            show_help()
-        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        return
-
-    if cmd not in commands:
-        console.print(f"[red]Unknown command: {cmd}. Type '/help' to see all commands.[/red]")
-        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        return
-
-    entry = commands[cmd]
-    if entry.get("usage") and not arg:
-        arg = questionary.text(f"Argument for '{cmd}'").ask()
+    while True:
+        raw = questionary.text("Enter command (or /help for list)").ask()
+        if raw is None:
+            raise typer.Exit()
         try:
-            handle_slash(arg)
+            inp = handle_slash(raw)
         except Back:
-            return
+            raise
+        if inp is None:
+            raise Back()
 
-    console.print(f"Running: {cmd}")
-    run_command(cmd, arg)
-    questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        parts = inp.strip().split(maxsplit=1)
+        cmd = parts[0].lower()
+        arg = parts[1] if len(parts) > 1 else None
+
+        if cmd in ("/help", "help"):
+            if arg:
+                show_help(arg)
+            else:
+                show_help()
+            console.print()
+            continue
+
+        if cmd not in commands:
+            console.print(f"[red]Unknown command: {cmd}. Type '/help' to see all commands.[/red]")
+            continue
+
+        entry = commands[cmd]
+        if entry.get("usage") and not arg:
+            arg = questionary.text(f"Argument for '{cmd}'").ask()
+            try:
+                handle_slash(arg)
+            except Back:
+                continue
+
+        console.print(f"Running: {cmd}")
+        run_command(cmd, arg)
+        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def basic_mode_menu():
     try:
-        while True:
-            console.clear()
-            console.print("[bold cyan]Basic Mode[/bold cyan]\n")
-            commands = get_commands()
-            run_command_from_menu(commands)
+        console.clear()
+        console.print("[bold cyan]Basic Mode[/bold cyan]\n")
+        commands = get_commands()
+        run_command_from_menu(commands)
     except Back:
         pass
 
