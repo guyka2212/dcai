@@ -1,46 +1,41 @@
 # DCAI Basic Mode Command Registry
-# Add new commands by adding entries here.
-# Each entry maps a command name to a shell action and description.
-# Optional fields: usage (for commands taking arguments)
+# Generic developer-friendly commands.
+# Commands with "usage" take arguments — the arg is prompted after selection.
 
 commands:
-  open-firefox:
-    description: Open Firefox web browser
-    action: firefox
+  open:
+    description: Open any application (e.g. open firefox, open code, open terminal)
+    usage: "open <app-name>"
+    action: run_in_terminal
 
-  open-chrome:
-    description: Open Google Chrome web browser
-    action: google-chrome-stable || google-chrome || chromium-browser || chromium
+  edit:
+    description: Edit any file in the default editor (e.g. edit ~/.vimrc, edit src/main.py)
+    usage: "edit <file-path>"
+    action: run_in_terminal
 
-  open-terminal:
-    description: Open a new terminal window
-    action: x-terminal-emulator || gnome-terminal || konsole || xterm
-
-  open-files:
-    description: Open file manager in current directory
-    action: xdg-open . || nautilus || dolphin || thunar
-
-  edit-bashrc:
-    description: Edit ~/.bashrc in vim
-    action: 'vim ~/.bashrc'
-
-  edit-zshrc:
-    description: Edit ~/.zshrc in vim
-    action: 'vim ~/.zshrc'
-
-  edit-vimrc:
-    description: Edit ~/.vimrc in vim
-    action: 'vim ~/.vimrc'
+  run:
+    description: Run any shell command in a terminal (detects SSH vs desktop)
+    usage: "run <command>"
+    action: run_in_terminal
 
   sysinfo:
-    description: Display CPU/RAM/GPU/disk summary
+    description: Display CPU, RAM, GPU, and disk summary
     action: sysinfo_custom
 
-  update-system:
-    description: Run system package update for detected package manager
+  ps:
+    description: List running processes sorted by memory usage
+    action: "ps aux --sort=-%mem | less"
+
+  kill:
+    description: Kill a process by name
+    usage: "kill <process-name>"
+    action: "pkill -f"
+
+  update:
+    description: Run system package update for the detected package manager
     action: update_system_custom
 
-  lock-screen:
+  lock:
     description: Lock the screen
     action: lock_screen_custom
 
@@ -48,11 +43,11 @@ commands:
     description: Take a screenshot interactively
     action: screenshot_custom
 
-  volume-up:
+  vol-up:
     description: Increase volume by 10%
     action: "pactl set-sink-volume @DEFAULT_SINK@ +10% || amixer set Master 10%+"
 
-  volume-down:
+  vol-down:
     description: Decrease volume by 10%
     action: "pactl set-sink-volume @DEFAULT_SINK@ -10% || amixer set Master 10%-"
 
@@ -60,24 +55,10 @@ commands:
     description: Mute/unmute audio
     action: "pactl set-sink-mute @DEFAULT_SINK@ toggle || amixer set Master toggle"
 
-  wifi-toggle:
+  wifi:
     description: Toggle Wi-Fi on/off
     action: wifi_toggle_custom
 
-  bluetooth-toggle:
+  bluetooth:
     description: Toggle Bluetooth on/off
     action: bluetooth_toggle_custom
-
-  list-processes:
-    description: List running processes sorted by memory usage
-    action: "ps aux --sort=-%mem | less"
-
-  kill-process:
-    description: Kill a process by name
-    usage: "kill-process <name>"
-    action: "pkill -f"
-
-  open-project:
-    description: Open a project directory in the editor
-    usage: "open-project <path>"
-    action: "open_project_custom"

@@ -73,16 +73,16 @@ def run_command(name: str, args: Optional[str] = None) -> int:
         return wifi_toggle()
     elif action == "bluetooth_toggle_custom":
         return bluetooth_toggle()
+    elif action == "run_in_terminal":
+        if not args:
+            print(f"Usage: {entry.get('usage', name)}")
+            return 1
+        return run_in_terminal(args)
     elif action.startswith("pkill"):
         if not args:
-            print(f"Usage: {entry.get('usage', 'kill-process <name>')}")
+            print(f"Usage: {entry.get('usage', 'kill <name>')}")
             return 1
         return run_in_terminal(f"pkill -f {args}")
-    elif action == "open_project_custom":
-        if not args:
-            print(f"Usage: {entry.get('usage', 'open-project <path>')}")
-            return 1
-        return open_project(args)
     else:
         return run_in_terminal(action)
 
@@ -181,11 +181,6 @@ def screenshot() -> int:
                 return subprocess.run([cmd, f"{os.path.expanduser('~')}/screenshot_$(date +%s).png"], shell=True).returncode
         print("No screenshot tool found")
         return 1
-
-
-def open_project(path: str) -> int:
-    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vim"
-    return run_in_terminal(f"cd {path} && {editor} .")
 
 
 def wifi_toggle() -> int:
