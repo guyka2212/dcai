@@ -123,7 +123,6 @@ def run_command_from_menu(commands: dict):
 
         console.print(f"Running: {cmd}")
         run_command(cmd, arg)
-        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def basic_mode_menu():
@@ -140,7 +139,6 @@ def ai_mode_menu():
     if not ai_mode.is_configured():
         console.print("AI Mode is not configured. Starting setup...")
         ai_mode.first_run_wizard()
-        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
         return
 
     try:
@@ -149,7 +147,6 @@ def ai_mode_menu():
     except Back:
         return
     ai_mode.process_request(prompt)
-    questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def plugins_menu():
@@ -199,7 +196,6 @@ def plugins_menu():
                     continue
                 if name:
                     plugin_mod.update_plugin(name)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
     except Back:
         pass
 
@@ -256,7 +252,6 @@ def settings_menu():
                 except Back:
                     continue
                 backup_mod.backup_pull(url if url else None)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
     except Back:
         pass
 
