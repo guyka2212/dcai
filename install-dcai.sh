@@ -14,7 +14,7 @@ info() { echo -e " ${CYAN}ℹ️${NC} $1"; }
 warn() { echo -e " ${YELLOW}⚠️${NC} $1"; }
 
 # ─── Config ───────────────────────────────────────────────────────────────────
-REPO_URL="https://github.com/<you>/dcai"
+REPO_URL="https://github.com/guyka2212/dcai"
 REPO_BRANCH="main"
 INSTALL_DIR="${DCAI_DIR:-"${XDG_DATA_HOME:-$HOME/.local/share}/dcai"}"
 BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"

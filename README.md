@@ -3,7 +3,7 @@
 A terminal-based control assistant with three modes: **Basic**, **AI**, and **Plugins**.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<you>/dcai/main/install-dcai.sh | bash
+curl -fsSL https://raw.githubusercontent.com/guyka2212/dcai/main/install-dcai.sh | bash
 ```
 
 ## Features
@@ -37,7 +37,7 @@ Extend DCAI with community plugins:
 
 ```bash
 # Install
-curl -fsSL https://raw.githubusercontent.com/<you>/dcai/main/install-dcai.sh | bash
+curl -fsSL https://raw.githubusercontent.com/guyka2212/dcai/main/install-dcai.sh | bash
 
 # Launch interactive menu
 dcai
@@ -68,8 +68,8 @@ See [install-dcai.sh](install-dcai.sh) — the single-command installer handles:
 ## Backup
 
 ```bash
-dcai backup push https://github.com/<you>/your-backup-repo
-dcai backup pull https://github.com/<you>/your-backup-repo
+dcai backup push https://github.com/guyka2212/your-backup-repo
+dcai backup pull https://github.com/guyka2212/your-backup-repo
 ```
 
 Pushes/restores config and data (excluding secrets) to a private GitHub repo.
