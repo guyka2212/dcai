@@ -64,15 +64,7 @@ def interactive_menu():
 
 
 def run_command_from_menu(commands: dict):
-    items = list(commands.items())
-    for name, entry in items:
-        usage = entry.get("usage", name)
-        console.print(f"  [bold]{name}[/bold] — {entry['description']}")
-    console.print()
-    console.print("  Type a command name, [bold]help[/bold] for all commands, [bold]help <cmd>[/bold] for details, or press Enter to go back.")
-    console.print()
-
-    inp = questionary.text("Command").ask()
+    inp = questionary.text("Enter command (or 'help' for list)").ask()
     if not inp:
         return
 
