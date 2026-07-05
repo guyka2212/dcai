@@ -23,8 +23,8 @@ commands:
     action: sysinfo_custom
 
   ps:
-    description: List running processes sorted by memory usage
-    action: "ps aux --sort=-%mem | less"
+    description: Show running user processes (pid, name, cpu%, mem%)
+    action: ps_custom
 
   kill:
     description: Kill a process by name

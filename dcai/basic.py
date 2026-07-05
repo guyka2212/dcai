@@ -69,6 +69,8 @@ def run_command(name: str, args: Optional[str] = None) -> int:
         return lock_screen()
     elif action == "screenshot_custom":
         return screenshot()
+    elif action == "ps_custom":
+        return ps_list()
     elif action == "wifi_toggle_custom":
         return wifi_toggle()
     elif action == "bluetooth_toggle_custom":
@@ -181,6 +183,20 @@ def screenshot() -> int:
                 return subprocess.run([cmd, f"{os.path.expanduser('~')}/screenshot_$(date +%s).png"], shell=True).returncode
         print("No screenshot tool found")
         return 1
+
+
+def ps_list() -> int:
+    result = subprocess.run(
+        ["ps", "h", "-U", os.environ.get("USER", ""), "o", "pid,%cpu,%mem,comm"],
+        capture_output=True, text=True,
+    )
+    lines = [l for l in result.stdout.splitlines() if l.strip()]
+    lines.sort(key=lambda l: float(l.split()[1] or 0), reverse=True)
+    print(f"{'PID':>7} {'CPU%':>5} {'MEM%':>5}  COMMAND")
+    print("-" * 40)
+    for l in lines[:20]:
+        print(l)
+    return 0
 
 
 def wifi_toggle() -> int:
