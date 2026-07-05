@@ -5,7 +5,6 @@ from typing import Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt
 import questionary
 
 from dcai.config import load_config, save_config, ensure_dirs
@@ -22,6 +21,24 @@ app = typer.Typer(
 console = Console()
 
 
+class Back(Exception):
+    pass
+
+
+def handle_slash(inp: str | None) -> str | None:
+    if not inp:
+        return None
+    val = inp.strip().lower()
+    if val in ("/exit", "/quit"):
+        console.print("Goodbye!")
+        raise typer.Exit()
+    if val == "/back":
+        raise Back()
+    if val == "/clear":
+        console.clear()
+    return inp
+
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     if ctx.invoked_subcommand is None:
@@ -31,48 +48,53 @@ def main(ctx: typer.Context):
 def interactive_menu():
     ensure_dirs()
     while True:
-        console.clear()
-        console.print(Panel.fit(
-            "[bold cyan]DCAI — Desktop Control AI[/bold cyan]\n"
-            "[dim]Terminal-based control assistant[/dim]",
-            border_style="cyan",
-        ))
-        console.print()
+        try:
+            console.clear()
+            console.print(Panel.fit(
+                "[bold cyan]DCAI — Desktop Control AI[/bold cyan]\n"
+                "[dim]Terminal-based control assistant[/dim]",
+                border_style="cyan",
+            ))
+            console.print()
 
-        choice = questionary.select(
-            "What would you like to do?",
-            choices=[
-                "Basic Mode",
-                "AI Mode",
-                "Plugins",
-                "Settings / Backup",
-                "Exit",
-            ],
-        ).ask()
+            choice = questionary.select(
+                "What would you like to do?",
+                choices=[
+                    "Basic Mode",
+                    "AI Mode",
+                    "Plugins",
+                    "Settings / Backup",
+                    "Exit (/exit)",
+                ],
+            ).ask()
 
-        if choice == "Basic Mode":
-            basic_mode_menu()
-        elif choice == "AI Mode":
-            ai_mode_menu()
-        elif choice == "Plugins":
-            plugins_menu()
-        elif choice == "Settings / Backup":
-            settings_menu()
-        elif choice == "Exit":
-            console.print("Goodbye!")
-            raise typer.Exit()
+            if choice is None:
+                continue
+            if choice == "Exit (/exit)":
+                console.print("Goodbye!")
+                raise typer.Exit()
+            elif choice == "Basic Mode":
+                basic_mode_menu()
+            elif choice == "AI Mode":
+                ai_mode_menu()
+            elif choice == "Plugins":
+                plugins_menu()
+            elif choice == "Settings / Backup":
+                settings_menu()
+        except Back:
+            continue
 
 
 def run_command_from_menu(commands: dict):
-    inp = questionary.text("Enter command (or 'help' for list)").ask()
-    if not inp:
-        return
+    inp = handle_slash(
+        questionary.text("Enter command (or /help for list)").ask()
+    )
 
     parts = inp.strip().split(maxsplit=1)
     cmd = parts[0].lower()
     arg = parts[1] if len(parts) > 1 else None
 
-    if cmd == "help":
+    if cmd in ("/help", "help"):
         if arg:
             show_help(arg)
         else:
@@ -81,13 +103,17 @@ def run_command_from_menu(commands: dict):
         return
 
     if cmd not in commands:
-        console.print(f"[red]Unknown command: {cmd}. Type 'help' to see all commands.[/red]")
+        console.print(f"[red]Unknown command: {cmd}. Type '/help' to see all commands.[/red]")
         questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
         return
 
     entry = commands[cmd]
     if entry.get("usage") and not arg:
         arg = questionary.text(f"Argument for '{cmd}'").ask()
+        try:
+            handle_slash(arg)
+        except Back:
+            return
 
     console.print(f"Running: {cmd}")
     run_command(cmd, arg)
@@ -95,11 +121,14 @@ def run_command_from_menu(commands: dict):
 
 
 def basic_mode_menu():
-    while True:
-        console.clear()
-        console.print("[bold cyan]Basic Mode[/bold cyan]\n")
-        commands = get_commands()
-        run_command_from_menu(commands)
+    try:
+        while True:
+            console.clear()
+            console.print("[bold cyan]Basic Mode[/bold cyan]\n")
+            commands = get_commands()
+            run_command_from_menu(commands)
+    except Back:
+        pass
 
 
 def ai_mode_menu():
@@ -109,96 +138,122 @@ def ai_mode_menu():
         questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
         return
 
-    prompt = questionary.text("Enter your request (or leave empty to go back)").ask()
-    if not prompt:
+    try:
+        prompt = questionary.text("Your request (or /back to go back)").ask()
+        handle_slash(prompt)
+    except Back:
         return
     ai_mode.process_request(prompt)
     questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def plugins_menu():
-    while True:
-        console.clear()
-        console.print("[bold cyan]Plugin Manager[/bold cyan]\n")
+    try:
+        while True:
+            console.clear()
+            console.print("[bold cyan]Plugin Manager[/bold cyan]\n")
 
-        choice = questionary.select(
-            "Select an option",
-            choices=[
-                "List installed plugins",
-                "Install plugin from URL",
-                "Remove plugin",
-                "Update plugin",
-                "Back to main menu",
-            ],
-        ).ask()
+            choice = questionary.select(
+                "Select an option",
+                choices=[
+                    "List installed plugins",
+                    "Install plugin from URL",
+                    "Remove plugin",
+                    "Update plugin",
+                    "Back to main menu (/back)",
+                ],
+            ).ask()
 
-        if choice == "List installed plugins":
-            plugin_mod.list_plugins()
+            if choice is None:
+                break
+            if choice == "Back to main menu (/back)":
+                break
+            elif choice == "List installed plugins":
+                plugin_mod.list_plugins()
+            elif choice == "Install plugin from URL":
+                url = questionary.text("GitHub URL").ask()
+                try:
+                    handle_slash(url)
+                except Back:
+                    continue
+                if url:
+                    plugin_mod.install_plugin(url)
+            elif choice == "Remove plugin":
+                name = questionary.text("Plugin name to remove").ask()
+                try:
+                    handle_slash(name)
+                except Back:
+                    continue
+                if name:
+                    plugin_mod.remove_plugin(name)
+            elif choice == "Update plugin":
+                name = questionary.text("Plugin name to update").ask()
+                try:
+                    handle_slash(name)
+                except Back:
+                    continue
+                if name:
+                    plugin_mod.update_plugin(name)
             questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Install plugin from URL":
-            url = questionary.text("GitHub URL").ask()
-            if url:
-                plugin_mod.install_plugin(url)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Remove plugin":
-            name = questionary.text("Plugin name to remove").ask()
-            if name:
-                plugin_mod.remove_plugin(name)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Update plugin":
-            name = questionary.text("Plugin name to update").ask()
-            if name:
-                plugin_mod.update_plugin(name)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Back to main menu":
-            break
+    except Back:
+        pass
 
 
 def settings_menu():
-    while True:
-        console.clear()
-        console.print("[bold cyan]Settings / Backup[/bold cyan]\n")
+    try:
+        while True:
+            console.clear()
+            console.print("[bold cyan]Settings / Backup[/bold cyan]\n")
 
-        choice = questionary.select(
-            "Select an option",
-            choices=[
-                "View current config",
-                "Reset AI Mode configuration",
-                "Backup config to GitHub",
-                "Restore config from GitHub",
-                "Back to main menu",
-            ],
-        ).ask()
-
-        if choice == "View current config":
-            config = load_config()
-            console.print(config)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Reset AI Mode configuration":
-            confirm = questionary.confirm(
-                "Reset AI Mode config? This cannot be undone",
-                default=False,
+            choice = questionary.select(
+                "Select an option",
+                choices=[
+                    "View current config",
+                    "Reset AI Mode configuration",
+                    "Backup config to GitHub",
+                    "Restore config from GitHub",
+                    "Back to main menu (/back)",
+                ],
             ).ask()
-            if confirm:
+
+            if choice is None:
+                break
+            if choice == "Back to main menu (/back)":
+                break
+            elif choice == "View current config":
                 config = load_config()
-                config.pop("ai", None)
-                save_config(config)
-                console.print("[green]AI configuration reset.[/green]")
+                console.print(config)
+            elif choice == "Reset AI Mode configuration":
+                confirm = questionary.confirm(
+                    "Reset AI Mode config? This cannot be undone",
+                    default=False,
+                ).ask()
+                if confirm:
+                    config = load_config()
+                    config.pop("ai", None)
+                    save_config(config)
+                    console.print("[green]AI configuration reset.[/green]")
+            elif choice == "Backup config to GitHub":
+                url = questionary.text(
+                    "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
+                ).ask()
+                try:
+                    handle_slash(url)
+                except Back:
+                    continue
+                backup_mod.backup_push(url if url else None)
+            elif choice == "Restore config from GitHub":
+                url = questionary.text(
+                    "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
+                ).ask()
+                try:
+                    handle_slash(url)
+                except Back:
+                    continue
+                backup_mod.backup_pull(url if url else None)
             questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Backup config to GitHub":
-            url = questionary.text(
-                "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
-            ).ask()
-            backup_mod.backup_push(url if url else None)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Restore config from GitHub":
-            url = questionary.text(
-                "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
-            ).ask()
-            backup_mod.backup_pull(url if url else None)
-            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
-        elif choice == "Back to main menu":
-            break
+    except Back:
+        pass
 
 
 # --- Subcommands for power users/scripts ---
