@@ -138,34 +138,43 @@ def is_configured() -> bool:
 
 
 def first_run_wizard():
+    import questionary
+
     print("=== DCAI AI Mode — First-time Setup ===\n")
 
     config = load_config()
     ai_config = config.get("ai", {})
 
-    choice = input(
-        "1) I already have an Ollama server running\n"
-        "2) I want to use an API key (OpenAI, Anthropic, etc.)\n"
-        "3) Install Ollama locally\n"
-        "Choose [1/2/3]: "
-    ).strip()
+    choice = questionary.select(
+        "How would you like to use AI?",
+        choices=[
+            "I already have an Ollama server running",
+            "I want to use an API key (OpenAI, Anthropic, etc.)",
+            "Install Ollama locally",
+        ],
+    ).ask()
 
-    if choice == "1":
-        host = input("Ollama host (default: http://localhost:11434): ").strip() or "http://localhost:11434"
+    if choice == "I already have an Ollama server running":
+        host = questionary.text(
+            "Ollama host", default="http://localhost:11434"
+        ).ask()
         ai_config["provider"] = "ollama"
         ai_config["host"] = host
         ai_config["configured"] = True
         print("Ollama server configured.")
 
-    elif choice == "2":
-        provider = input("Provider (openai/anthropic/other): ").strip().lower()
-        key = input("API key: ").strip()
+    elif choice == "I want to use an API key (OpenAI, Anthropic, etc.)":
+        provider = questionary.select(
+            "Provider",
+            choices=["openai", "anthropic", "other"],
+        ).ask()
+        key = questionary.password("API key").ask()
         ai_config["provider"] = provider
         ai_config["api_key"] = key
         ai_config["configured"] = True
         print(f"{provider.upper()} API key configured.")
 
-    elif choice == "3":
+    elif choice == "Install Ollama locally":
         print("Checking specs for model recommendation...")
         specs = detect_specs()
         model = recommend_model(specs)
@@ -173,8 +182,10 @@ def first_run_wizard():
         print(f"Recommended model: {model}")
 
         if not check_ollama_installed():
-            ok = input("Ollama is not installed. Install now? [Y/n]: ").strip().lower()
-            if ok != "n":
+            ok = questionary.confirm(
+                "Ollama is not installed. Install now?", default=True
+            ).ask()
+            if ok:
                 if install_ollama():
                     print("Ollama installed successfully.")
                 else:
@@ -188,18 +199,16 @@ def first_run_wizard():
                 import time
                 time.sleep(3)
 
-            pull = input(f"Pull model '{model}' now? [Y/n]: ").strip().lower()
-            if pull != "n":
+            pull = questionary.confirm(
+                f"Pull model '{model}' now?", default=True
+            ).ask()
+            if pull:
                 pull_model(model)
 
         ai_config["provider"] = "ollama"
         ai_config["host"] = "http://localhost:11434"
         ai_config["model"] = model
         ai_config["configured"] = True
-
-    else:
-        print("Invalid choice. Setup cancelled.")
-        return
 
     config["ai"] = ai_config
     save_config(config)

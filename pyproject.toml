@@ -15,6 +15,7 @@ dependencies = [
     "pyyaml>=6.0",
     "requests>=2.31",
     "platformdirs>=4.0",
+    "questionary>=2.1",
 ]
 
 [project.scripts]

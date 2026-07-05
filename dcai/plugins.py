@@ -4,6 +4,7 @@ import subprocess
 import yaml
 from pathlib import Path
 from typing import Optional
+import questionary
 
 from dcai.config import PLUGINS_DIR, load_config, save_config
 
@@ -63,8 +64,11 @@ def install_plugin(url: str) -> bool:
         name = manifest["name"]
         dest = PLUGINS_DIR / name
         if dest.exists():
-            overwrite = input(f"Plugin '{name}' is already installed. Overwrite? [y/N]: ").strip().lower()
-            if overwrite != "y":
+            overwrite = questionary.confirm(
+                f"Plugin '{name}' is already installed. Overwrite?",
+                default=False,
+            ).ask()
+            if not overwrite:
                 print("Install cancelled.")
                 return False
             shutil.rmtree(dest)
@@ -80,8 +84,10 @@ def install_plugin(url: str) -> bool:
                 print(f"  - {cmd.get('name')}: {cmd.get('description', 'N/A')}")
         print()
 
-        confirm = input("Install this plugin? [y/N]: ").strip().lower()
-        if confirm != "y":
+        confirm = questionary.confirm(
+            "Install this plugin?", default=False
+        ).ask()
+        if not confirm:
             print("Install cancelled.")
             return False
 

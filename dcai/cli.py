@@ -1,16 +1,14 @@
 import os
 import sys
-import shutil
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.prompt import Prompt
+import questionary
 
 from dcai.config import load_config, save_config, ensure_dirs
-from dcai.terminal import run_in_terminal, is_ssh_session
 from dcai.basic import get_commands, run_command
 from dcai import ai_mode
 from dcai import plugins as plugin_mod
@@ -40,24 +38,27 @@ def interactive_menu():
             border_style="cyan",
         ))
         console.print()
-        console.print("1. Basic Mode")
-        console.print("2. AI Mode")
-        console.print("3. Plugins")
-        console.print("4. Settings / Backup")
-        console.print("5. Exit")
-        console.print()
 
-        choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5"])
+        choice = questionary.select(
+            "What would you like to do?",
+            choices=[
+                "Basic Mode",
+                "AI Mode",
+                "Plugins",
+                "Settings / Backup",
+                "Exit",
+            ],
+        ).ask()
 
-        if choice == "1":
+        if choice == "Basic Mode":
             basic_mode_menu()
-        elif choice == "2":
+        elif choice == "AI Mode":
             ai_mode_menu()
-        elif choice == "3":
+        elif choice == "Plugins":
             plugins_menu()
-        elif choice == "4":
+        elif choice == "Settings / Backup":
             settings_menu()
-        elif choice == "5":
+        elif choice == "Exit":
             console.print("Goodbye!")
             raise typer.Exit()
 
@@ -68,65 +69,70 @@ def basic_mode_menu():
         console.print("[bold cyan]Basic Mode[/bold cyan]\n")
         commands = get_commands()
         items = list(commands.items())
-        for i, (name, entry) in enumerate(items, 1):
-            console.print(f"{i}. {name} — {entry['description']}")
-        console.print(f"{len(items) + 1}. Back to main menu")
-        console.print()
 
-        choice = Prompt.ask("Select a command", choices=[str(i) for i in range(1, len(items) + 2)])
+        choices = [f"{name} — {entry['description']}" for name, entry in items]
+        choices.append("Back to main menu")
 
-        if int(choice) == len(items) + 1:
+        choice = questionary.select("Select a command", choices=choices).ask()
+
+        if choice == "Back to main menu":
             break
 
-        name = items[int(choice) - 1][0]
+        name = choice.split(" — ")[0]
         console.print(f"Running: {name}")
         run_command(name)
-        Prompt.ask("\nPress Enter to continue")
+        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def ai_mode_menu():
     if not ai_mode.is_configured():
         console.print("AI Mode is not configured. Starting setup...")
         ai_mode.first_run_wizard()
-        Prompt.ask("\nPress Enter to continue")
+        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
         return
 
-    prompt = Prompt.ask("Enter your request (or 'exit' to go back)")
-    if prompt.lower() in ("exit", "back", "quit"):
+    prompt = questionary.text("Enter your request (or leave empty to go back)").ask()
+    if not prompt:
         return
     ai_mode.process_request(prompt)
-    Prompt.ask("\nPress Enter to continue")
+    questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
 
 
 def plugins_menu():
     while True:
         console.clear()
         console.print("[bold cyan]Plugin Manager[/bold cyan]\n")
-        console.print("1. List installed plugins")
-        console.print("2. Install plugin from URL")
-        console.print("3. Remove plugin")
-        console.print("4. Update plugin")
-        console.print("5. Back to main menu")
-        console.print()
 
-        choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5"])
+        choice = questionary.select(
+            "Select an option",
+            choices=[
+                "List installed plugins",
+                "Install plugin from URL",
+                "Remove plugin",
+                "Update plugin",
+                "Back to main menu",
+            ],
+        ).ask()
 
-        if choice == "1":
+        if choice == "List installed plugins":
             plugin_mod.list_plugins()
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "2":
-            url = Prompt.ask("GitHub URL")
-            plugin_mod.install_plugin(url)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "3":
-            name = Prompt.ask("Plugin name to remove")
-            plugin_mod.remove_plugin(name)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "4":
-            name = Prompt.ask("Plugin name to update")
-            plugin_mod.update_plugin(name)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "5":
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Install plugin from URL":
+            url = questionary.text("GitHub URL").ask()
+            if url:
+                plugin_mod.install_plugin(url)
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Remove plugin":
+            name = questionary.text("Plugin name to remove").ask()
+            if name:
+                plugin_mod.remove_plugin(name)
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Update plugin":
+            name = questionary.text("Plugin name to update").ask()
+            if name:
+                plugin_mod.update_plugin(name)
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Back to main menu":
             break
 
 
@@ -134,36 +140,46 @@ def settings_menu():
     while True:
         console.clear()
         console.print("[bold cyan]Settings / Backup[/bold cyan]\n")
-        console.print("1. View current config")
-        console.print("2. Reset AI Mode configuration")
-        console.print("3. Backup config to GitHub")
-        console.print("4. Restore config from GitHub")
-        console.print("5. Back to main menu")
-        console.print()
 
-        choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5"])
+        choice = questionary.select(
+            "Select an option",
+            choices=[
+                "View current config",
+                "Reset AI Mode configuration",
+                "Backup config to GitHub",
+                "Restore config from GitHub",
+                "Back to main menu",
+            ],
+        ).ask()
 
-        if choice == "1":
+        if choice == "View current config":
             config = load_config()
             console.print(config)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "2":
-            confirm = Prompt.ask("Reset AI Mode config? This cannot be undone [y/N]")
-            if confirm.lower() == "y":
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Reset AI Mode configuration":
+            confirm = questionary.confirm(
+                "Reset AI Mode config? This cannot be undone",
+                default=False,
+            ).ask()
+            if confirm:
                 config = load_config()
                 config.pop("ai", None)
                 save_config(config)
-                console.print("AI configuration reset.")
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "3":
-            url = Prompt.ask("GitHub repo URL (or press Enter to use DCAI_BACKUP_REPO env var)")
+                console.print("[green]AI configuration reset.[/green]")
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Backup config to GitHub":
+            url = questionary.text(
+                "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
+            ).ask()
             backup_mod.backup_push(url if url else None)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "4":
-            url = Prompt.ask("GitHub repo URL (or press Enter to use DCAI_BACKUP_REPO env var)")
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Restore config from GitHub":
+            url = questionary.text(
+                "GitHub repo URL (or leave empty to use DCAI_BACKUP_REPO env var)"
+            ).ask()
             backup_mod.backup_pull(url if url else None)
-            Prompt.ask("\nPress Enter to continue")
-        elif choice == "5":
+            questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        elif choice == "Back to main menu":
             break
 
 
