@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dcai"
+version = "0.1.0"
+description = "Desktop Control AI — a terminal-based control assistant"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.9",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "platformdirs>=4.0",
+]
+
+[project.scripts]
+dcai = "dcai.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["dcai*"]
+
+[tool.setuptools.package-data]
+dcai = ["*.yaml"]

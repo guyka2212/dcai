@@ -1,0 +1,80 @@
+# DCAI Basic Mode Command Registry
+# Add new commands by adding entries here.
+# Each entry maps a command name to a shell action and description.
+
+commands:
+  open-firefox:
+    description: Open Firefox web browser
+    action: firefox
+
+  open-chrome:
+    description: Open Google Chrome web browser
+    action: google-chrome-stable || google-chrome || chromium-browser || chromium
+
+  open-terminal:
+    description: Open a new terminal window
+    action: x-terminal-emulator || gnome-terminal || konsole || xterm
+
+  open-files:
+    description: Open file manager
+    action: xdg-open . || nautilus || dolphin || thunar
+
+  edit-bashrc:
+    description: Edit ~/.bashrc in vim
+    action: 'vim ~/.bashrc'
+
+  edit-zshrc:
+    description: Edit ~/.zshrc in vim
+    action: 'vim ~/.zshrc'
+
+  edit-vimrc:
+    description: Edit ~/.vimrc in vim
+    action: 'vim ~/.vimrc'
+
+  sysinfo:
+    description: Display CPU/RAM/GPU/disk summary
+    action: sysinfo_custom
+
+  update-system:
+    description: Run system package update
+    action: update_system_custom
+
+  lock-screen:
+    description: Lock the screen
+    action: lock_screen_custom
+
+  screenshot:
+    description: Take a screenshot
+    action: screenshot_custom
+
+  volume-up:
+    description: Increase volume by 10%
+    action: "pactl set-sink-volume @DEFAULT_SINK@ +10% || amixer set Master 10%+"
+
+  volume-down:
+    description: Decrease volume by 10%
+    action: "pactl set-sink-volume @DEFAULT_SINK@ -10% || amixer set Master 10%-"
+
+  mute:
+    description: Mute/unmute audio
+    action: "pactl set-sink-mute @DEFAULT_SINK@ toggle || amixer set Master toggle"
+
+  wifi-toggle:
+    description: Toggle Wi-Fi on/off
+    action: wifi_toggle_custom
+
+  bluetooth-toggle:
+    description: Toggle Bluetooth on/off
+    action: bluetooth_toggle_custom
+
+  list-processes:
+    description: List running processes
+    action: "ps aux --sort=-%mem | less"
+
+  kill-process:
+    description: "Kill a process by name (usage: dcai run kill-process <name>)"
+    action: "pkill -f"
+
+  open-project:
+    description: "Open a project directory in editor (usage: dcai run open-project <path>)"
+    action: "open_project_custom"
