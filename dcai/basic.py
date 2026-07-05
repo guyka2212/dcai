@@ -23,6 +23,31 @@ def get_commands() -> dict:
     return registry.get("commands", {})
 
 
+def show_help(command_name: str | None = None) -> None:
+    commands = get_commands()
+    if command_name:
+        entry = commands.get(command_name)
+        if not entry:
+            print(f"Unknown command: {command_name}")
+            return
+        print(f"{command_name}")
+        print(f"  {entry['description']}")
+        usage = entry.get("usage")
+        if usage:
+            print(f"  Usage: {usage}")
+        else:
+            print(f"  Usage: {command_name}")
+    else:
+        print("Available commands:\n")
+        for name, entry in sorted(commands.items()):
+            usage = entry.get("usage", name)
+            desc = entry['description']
+            print(f"  {name:20s} {desc}")
+        print()
+        print("  Type 'help <command>' for details on a specific command.")
+        print("  Commands with args get prompted after selection.")
+
+
 def get_desktop_env():
     return os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
 
@@ -50,12 +75,12 @@ def run_command(name: str, args: Optional[str] = None) -> int:
         return bluetooth_toggle()
     elif action.startswith("pkill"):
         if not args:
-            print("Usage: dcai run kill-process <name>")
+            print(f"Usage: {entry.get('usage', 'kill-process <name>')}")
             return 1
         return run_in_terminal(f"pkill -f {args}")
     elif action == "open_project_custom":
         if not args:
-            print("Usage: dcai run open-project <path>")
+            print(f"Usage: {entry.get('usage', 'open-project <path>')}")
             return 1
         return open_project(args)
     else:

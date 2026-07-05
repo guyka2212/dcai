@@ -9,7 +9,7 @@ from rich.prompt import Prompt
 import questionary
 
 from dcai.config import load_config, save_config, ensure_dirs
-from dcai.basic import get_commands, run_command
+from dcai.basic import get_commands, run_command, show_help
 from dcai import ai_mode
 from dcai import plugins as plugin_mod
 from dcai import backup as backup_mod
@@ -63,25 +63,51 @@ def interactive_menu():
             raise typer.Exit()
 
 
+def run_command_from_menu(commands: dict):
+    items = list(commands.items())
+    for name, entry in items:
+        usage = entry.get("usage", name)
+        console.print(f"  [bold]{name}[/bold] — {entry['description']}")
+    console.print()
+    console.print("  Type a command name, [bold]help[/bold] for all commands, [bold]help <cmd>[/bold] for details, or press Enter to go back.")
+    console.print()
+
+    inp = questionary.text("Command").ask()
+    if not inp:
+        return
+
+    parts = inp.strip().split(maxsplit=1)
+    cmd = parts[0].lower()
+    arg = parts[1] if len(parts) > 1 else None
+
+    if cmd == "help":
+        if arg:
+            show_help(arg)
+        else:
+            show_help()
+        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        return
+
+    if cmd not in commands:
+        console.print(f"[red]Unknown command: {cmd}. Type 'help' to see all commands.[/red]")
+        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        return
+
+    entry = commands[cmd]
+    if entry.get("usage") and not arg:
+        arg = questionary.text(f"Argument for '{cmd}'").ask()
+
+    console.print(f"Running: {cmd}")
+    run_command(cmd, arg)
+    questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+
+
 def basic_mode_menu():
     while True:
         console.clear()
         console.print("[bold cyan]Basic Mode[/bold cyan]\n")
         commands = get_commands()
-        items = list(commands.items())
-
-        choices = [f"{name} — {entry['description']}" for name, entry in items]
-        choices.append("Back to main menu")
-
-        choice = questionary.select("Select a command", choices=choices).ask()
-
-        if choice == "Back to main menu":
-            break
-
-        name = choice.split(" — ")[0]
-        console.print(f"Running: {name}")
-        run_command(name)
-        questionary.press_any_key_to_continue("\nPress any key to continue...").ask()
+        run_command_from_menu(commands)
 
 
 def ai_mode_menu():

@@ -1,6 +1,7 @@
 # DCAI Basic Mode Command Registry
 # Add new commands by adding entries here.
 # Each entry maps a command name to a shell action and description.
+# Optional fields: usage (for commands taking arguments)
 
 commands:
   open-firefox:
@@ -16,7 +17,7 @@ commands:
     action: x-terminal-emulator || gnome-terminal || konsole || xterm
 
   open-files:
-    description: Open file manager
+    description: Open file manager in current directory
     action: xdg-open . || nautilus || dolphin || thunar
 
   edit-bashrc:
@@ -36,7 +37,7 @@ commands:
     action: sysinfo_custom
 
   update-system:
-    description: Run system package update
+    description: Run system package update for detected package manager
     action: update_system_custom
 
   lock-screen:
@@ -44,7 +45,7 @@ commands:
     action: lock_screen_custom
 
   screenshot:
-    description: Take a screenshot
+    description: Take a screenshot interactively
     action: screenshot_custom
 
   volume-up:
@@ -68,13 +69,15 @@ commands:
     action: bluetooth_toggle_custom
 
   list-processes:
-    description: List running processes
+    description: List running processes sorted by memory usage
     action: "ps aux --sort=-%mem | less"
 
   kill-process:
-    description: "Kill a process by name (usage: dcai run kill-process <name>)"
+    description: Kill a process by name
+    usage: "kill-process <name>"
     action: "pkill -f"
 
   open-project:
-    description: "Open a project directory in editor (usage: dcai run open-project <path>)"
+    description: Open a project directory in the editor
+    usage: "open-project <path>"
     action: "open_project_custom"
