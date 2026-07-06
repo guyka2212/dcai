@@ -193,3 +193,7 @@ dcai plugin install https://github.com/your-org/your-plugin
 - Use `sys.exit(0)` for success, `sys.exit(1)` for failures.
 - Print useful error messages to stderr (`print(msg, file=sys.stderr)`).
 - Don't hardcode paths — use environment variables or config if needed.
+
+---
+
+**Next:** [Installing Plugins](INSTALLING_PLUGINS.md) →

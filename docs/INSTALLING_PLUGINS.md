@@ -60,3 +60,7 @@ ls ~/.local/share/dcai/plugins/
 - DCAI does **not** sandbox plugin execution. A plugin runs with the same permissions as DCAI itself (your user account).
 - Before installing, always check what commands the plugin registers and review the source code.
 - Uninstall any plugin you no longer trust or use.
+
+---
+
+← **Previous:** [Creating Plugins](CREATING_PLUGINS.md)
